@@ -1,23 +1,18 @@
 *** Settings ***
-Library    RequestsLibrary
+Resource    ../resources/keywords.robot
+Library     Collections
 
-Suite Setup     Create Session    httpbin    https://httpbin.org
-
-*** Variables ***
-${BASIC_OK}    Basic dXNlcjpwYXNzd2Q=      # base64("user:passwd")
-${BASIC_BAD}   Basic dXNlcjpXUk9ORw==      # base64("user:WRONG")
+Suite Setup     Create Auth Session
 
 *** Test Cases ***
-Login Success (Basic Auth)
-    ${headers}=    Create Dictionary    Authorization=${BASIC_OK}
-    ${resp}=       GET On Session    httpbin    /basic-auth/user/passwd    headers=${headers}
-    Status Should Be    200    ${resp}
+Login Success (FakeStore)
+    ${payload}=    Create Dictionary    username=mor_2314    password=83r5^_
+    ${resp}=       Auth Login    ${payload}
+    Should Be True    ${resp.status_code} in [200, 201]
     ${body}=       Set Variable    ${resp.json()}
-    Should Be Equal    ${body["user"]}    user
-    Should Be True     ${body["authenticated"]}
+    Dictionary Should Contain Key    ${body}    token
 
-Login Negative (Wrong Creds)
-    ${headers}=    Create Dictionary    Authorization=${BASIC_BAD}
-    # expected_status=any — не бросать ошибку при 401/403
-    ${resp}=       GET On Session    httpbin    /basic-auth/user/passwd    headers=${headers}    expected_status=any
-    Should Be True    ${resp.status_code} in [401, 403]
+Login Negative (Missing Password)
+    ${payload}=    Create Dictionary    username=mor_2314
+    ${resp}=       Auth Login    ${payload}
+    Should Be True    ${resp.status_code} in [400, 401, 403]

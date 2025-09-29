@@ -1,29 +1,27 @@
 *** Settings ***
-Library    RequestsLibrary
-Library    Collections
+Resource    ../resources/keywords.robot
 
-Suite Setup     Create Session    jsonplaceholder    https://jsonplaceholder.typicode.com
+Suite Setup     Create API Session
 
 *** Test Cases ***
 Create User
-    ${data}=    Create Dictionary    name=Alex    job=QA
-    ${resp}=    POST On Session    jsonplaceholder    /users    json=${data}
+    ${payload}=    Create Dictionary    name=Alex    job=QA
+    ${resp}=       Post To JSON API    /users    ${payload}
     Status Should Be    201    ${resp}
-    ${body}=    Set Variable    ${resp.json()}
-    Should Be True    isinstance(${body}, dict)
+    Should Be True      isinstance(${resp.json()}, dict)
 
 Get Users
-    ${resp}=    GET On Session    jsonplaceholder    /users
+    ${resp}=       Get From JSON API    /users
     Status Should Be    200    ${resp}
-    ${items}=   Set Variable    ${resp.json()}
+    ${items}=      Set Variable    ${resp.json()}
     Should Be True    isinstance(${items}, list) and len(${items}) > 0
 
 Update User
-    ${data}=    Create Dictionary    name=Alex2    job=Senior QA
-    ${resp}=    PUT On Session    jsonplaceholder    /users/1    json=${data}
+    ${payload}=    Create Dictionary    name=Alex2    job=Senior QA
+    ${resp}=       Put To JSON API     /users/1    ${payload}
     Status Should Be    200    ${resp}
     Should Contain      ${resp.text}    Alex2
 
 Delete User
-    ${resp}=    DELETE On Session    jsonplaceholder    /users/1
+    ${resp}=       Delete From JSON API    /users/1
     Should Be True      ${resp.status_code} in [200, 204]
